@@ -1,0 +1,12 @@
+﻿{
+  "dependencies": {
+    "xunit": "2.1.0",
+    "WiX": "3.10.0.2103-pre1"
+  },
+  "frameworks": {
+    "net46": { }
+  },
+  "runtimes": {
+    "win-anycpu": { }
+  }
+}
