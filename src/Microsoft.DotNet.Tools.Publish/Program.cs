@@ -11,6 +11,7 @@ using Microsoft.DotNet.Cli.Utils;
 using Microsoft.Extensions.ProjectModel;
 using Microsoft.Extensions.ProjectModel.Compilation;
 using NuGet.Frameworks;
+using Microsoft.Extensions.ProjectModel.Graph;
 
 namespace Microsoft.DotNet.Tools.Publish
 {
@@ -34,13 +35,9 @@ namespace Microsoft.DotNet.Tools.Publish
 
             app.OnExecute(() =>
             {
-                if (!CheckArg(framework))
-                {
-                    return 1;
-                }
                 if (!CheckArg(runtime))
                 {
-                    return 1;
+                    runtime.Values.Add(RuntimeIdentifier.Current);
                 }
 
                 // Locate the project and get the name and full path
@@ -50,18 +47,23 @@ namespace Microsoft.DotNet.Tools.Publish
                     path = Directory.GetCurrentDirectory();
                 }
 
-                // Load project context and publish it
-                var fx = NuGetFramework.Parse(framework.Value());
-                var rids = new[] { runtime.Value() };
-                var context = ProjectContext.Create(path, fx, rids);
-
-                if (string.IsNullOrEmpty(context.RuntimeIdentifier))
+                if (framework.HasValue() && runtime.HasValue())
                 {
-                    Reporter.Output.WriteLine($"Unknown runtime identifier {runtime.Value()}.".Red());
-                    return 1;
+                    return Publish(framework.Value(), runtime.Value(), path, output.Value(), configuration.Value() ?? Constants.DefaultConfiguration);
                 }
+                else
+                {
+                    // parse the lock file
+                    var projectLockJsonPath = Path.Combine(path, LockFile.FileName);
+                    var lockFile = LockFileReader.Read(projectLockJsonPath);
+                    int retVal = 0;
 
-                return Publish(context, output.Value(), configuration.Value() ?? Constants.DefaultConfiguration);
+                    foreach (var target in lockFile.Targets)
+                    {
+                        //lockFile.Targets[0].
+                    }
+                    return Publish(framework.Value(), runtime.Value(), path, output.Value(), configuration.Value() ?? Constants.DefaultConfiguration);
+                }
             });
 
             try
@@ -87,6 +89,29 @@ namespace Microsoft.DotNet.Tools.Publish
                 return false;
             }
             return true;
+        }
+
+        private static int Publish(string framework, string runtimeIdentifier, string projectPath, string outputPath, string configuration)
+        {
+            // Load project context and publish it
+            var fx = NuGetFramework.Parse(framework);
+            var rids = new[] { runtimeIdentifier };
+
+            if (fx.Equals(NuGetFramework.UnsupportedFramework))
+            {
+                Reporter.Output.WriteLine($"Unsupported framework {framework}.".Red());
+                return 1;
+            }
+
+            var context = ProjectContext.Create(projectPath, fx, rids);
+
+            if (string.IsNullOrEmpty(context.RuntimeIdentifier))
+            {
+                Reporter.Output.WriteLine($"{context.RootProject.Identity} cannot be published for {context.TargetFramework.DotNetFrameworkName}/{runtimeIdentifier}.".Red());
+                return 1;
+            }
+
+            return Publish(context, outputPath, configuration);
         }
 
         private static int Publish(ProjectContext context, string outputPath, string configuration)
