@@ -134,6 +134,8 @@ function UploadInstallers($msiFile)
     return 0
 }
 
+Write-Host azure storage blob upload --quiet --container $env:STORAGE_CONTAINER --blob $Blob --blobtype block --connection-string "$env:CONNECTION_STRING" --file $Uploadfile
+
 if(!(CheckRequiredVariables))
 {
     # fail silently if the required variables are not available for publishing the file
