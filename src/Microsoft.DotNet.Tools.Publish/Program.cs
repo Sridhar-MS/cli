@@ -167,8 +167,7 @@ namespace Microsoft.DotNet.Tools.Publish
             var result = Command.Create("dotnet-compile",
                 $"--framework \"{context.TargetFramework.DotNetFrameworkName}\" " +
                 $"--output \"{outputPath}\" " +
-                $"--configuration \"{configuration}\" " +
-                "--no-host " +
+                $"--configuration \"{configuration}\" " +                
                 $"\"{context.ProjectFile.ProjectDirectory}\"")
                 .ForwardStdErr()
                 .ForwardStdOut()
