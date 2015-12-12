@@ -1,4 +1,6 @@
-﻿using FluentAssertions;
+﻿
+
+using FluentAssertions;
 using FluentAssertions.Execution;
 using Microsoft.DotNet.Cli.Utils;
 using System;

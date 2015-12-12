@@ -2,8 +2,9 @@
   "version": "1.0.0-*",  
   
   "dependencies": {
-    "Microsoft.NETCore.Platforms": "1.0.1-beta-*",
-    "Microsoft.NETCore.Runtime": "1.0.1-beta-*",
+    "Microsoft.NETCore.Platforms": "1.0.1-*",
+    "Microsoft.NETCore.Runtime": "1.0.1-*",
+    "Microsoft.NETCore.TestHost" : "1.0.0-*",
     "System.Console": "4.0.0-beta-*",
     "System.Runtime": "4.0.21-beta-*",
     "System.AppContext": "4.0.1-beta-*",

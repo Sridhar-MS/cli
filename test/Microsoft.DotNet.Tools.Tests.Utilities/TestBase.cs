@@ -39,7 +39,7 @@ namespace Microsoft.DotNet.Tools.Test.Utilities
         {
             if (_temp != null)
             {                
-                //_temp.Dispose();
+                _temp.Dispose();
             }
         }
     }

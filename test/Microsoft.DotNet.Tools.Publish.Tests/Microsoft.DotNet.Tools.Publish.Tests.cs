@@ -12,9 +12,9 @@ using Microsoft.DotNet.ProjectModel;
 
 namespace Microsoft.DotNet.Tools.Publish.Tests
 {
-    public class UnitTests : TestBase
+    public class PublishTests : TestBase
     {
-        private string _testProjectsRoot = @"D:\github\cli\test\TestProjects";
+        private string _testProjectsRoot = @"TestProjects";
 
         public static IEnumerable<object[]> PublishOptions
         {
