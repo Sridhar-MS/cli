@@ -132,7 +132,8 @@ Download it from https://www.cmake.org
         Exit 1
     }    
 
-    # E2E Test of stage2
+    $env:DOTNET_HOME = "$Stage2Dir"
+    # Run tests on stage2 dotnet tools
     & "$PSScriptRoot\test\runtests.ps1"
     if (!$?) {
         Write-Host "Command failed: $PSScriptRoot\test\runtests.ps1"

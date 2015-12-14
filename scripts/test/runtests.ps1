@@ -5,6 +5,8 @@
 
 . "$PSScriptRoot\..\_common.ps1"
 
+$TestBinRoot = "$RepoRoot\artifacts\tests"
+
 $TestProjects = @(
     "E2E",
     "Microsoft.DotNet.Tools.Publish.Tests"
@@ -12,9 +14,9 @@ $TestProjects = @(
 
 # Publish each test project
 $TestProjects | ForEach-Object {
-    dotnet publish --framework "dnxcore50" --runtime "$Rid" --output "$RepoRoot\artifacts\tests" --configuration "$Configuration" "$RepoRoot\test\$_"
+    dotnet publish --framework "dnxcore50" --runtime "$Rid" --output "$TestBinRoot" --configuration "$Configuration" "$RepoRoot\test\$_"
     if (!$?) {
-        Write-Host Command failed: dotnet publish --framework "dnxcore50" --runtime "$Rid" --output "$RepoRoot\artifacts\tests" --configuration "$Configuration" "$RepoRoot\test\$_"
+        Write-Host Command failed: dotnet publish --framework "dnxcore50" --runtime "$Rid" --output "$TestBinRoot" --configuration "$Configuration" "$RepoRoot\test\$_"
         exit 1
     }
 }
@@ -32,18 +34,35 @@ foreach {
 popd
 
 # copy TestProjects folder which is used by the test cases
-mkdir -Force "$RepoRoot\artifacts\tests\TestProjects"
-cp -rec -Force "$RepoRoot\test\TestProjects\*" "$RepoRoot\artifacts\tests\TestProjects"
+mkdir -Force "$TestBinRoot\TestProjects"
+cp -rec -Force "$RepoRoot\test\TestProjects\*" "$TestBinRoot\TestProjects"
 
 $failCount = 0
-pushd "$RepoRoot\artifacts\tests"
+$failingTests = @()
+
+pushd "$TestBinRoot"
 
 # Run each test project
-$TestProjects | ForEach-Object {	
+$TestProjects | ForEach-Object {
     & "corerun.exe"  "xunit.console.netcore.exe" "$_.dll" -xml "$_.xml"
-	$failCount += $LastExitCode
+    $exitCode = $LastExitCode
+    if ($exitCode -ne 0) {
+        $failingTests += "$_"
+    }
+
+    $failCount += $exitCode
 }
 
 popd
+
+if ($failCount -ne 0) {
+    Write-Host -ForegroundColor Red "The following tests failed."
+    $failingTests | ForEach-Object {
+        Write-Host -ForegroundColor Red "$_.dll failed. Logs in '$TestBinRoot\$_.xml'"
+    }
+}
+else {
+    Write-Host -ForegroundColor Green "All the tests passed!"
+}
 
 Exit $failCount
