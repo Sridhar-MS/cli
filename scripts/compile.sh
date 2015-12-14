@@ -115,5 +115,5 @@ COMMIT_ID=$(git rev-parse HEAD)
 echo $COMMIT_ID > $STAGE2_DIR/.commit
 
 # E2E test on the output
-header "Testing stage2 End to End ..."
-DOTNET_HOME=$STAGE2_DIR DOTNET_TOOLS=$STAGE2_DIR $DIR/test/e2e-test.sh
+header "Testing stage2..."
+DOTNET_HOME=$STAGE2_DIR DOTNET_TOOLS=$STAGE2_DIR $DIR/test/runtests.sh
