@@ -36,6 +36,8 @@ if (Test-Path $PackageName)
 Add-Type -Assembly System.IO.Compression.FileSystem
 [System.IO.Compression.ZipFile]::CreateFromDirectory($Stage2Dir, $PackageName, "Optimal", $false)
 
+Get-ChildItem Env:
+
 Write-Host "Packaged stage2 to $PackageName"
 
 $PublishScript = Join-Path $PSScriptRoot "..\publish\publish.ps1"
