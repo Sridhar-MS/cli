@@ -41,7 +41,7 @@ if (!$?) {
     Exit 1
 }
 
-Get-ChildItem Env
+Get-ChildItem Env:
 
 Write-Host -ForegroundColor Green "*** Packaging dotnet ***"
 & "$PSScriptRoot\package\package.ps1"
