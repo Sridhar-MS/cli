@@ -53,6 +53,8 @@ function UploadFile($Blob, $Uploadfile)
     Write-Host "HOMEPATH --> $env:HOMEPATH"
     Write-Host "HOMEDRIVE --> $env:HOMEDRIVE"
     
+    Get-ChildItem Env:
+    
 
     # use azure cli to upload to blob storage. We cannot use Invoke-WebRequest to do this becuase azure has a max limit of 64mb that can be uploaded using REST
     #$statusCode = (Invoke-WebRequest -URI "$Upload_URI" -Method PUT -Headers @{"x-ms-blob-type"="BlockBlob"; "x-ms-date"="2015-10-23";"x-ms-version"="2013-08-15"} -InFile $Uploadfile).StatusCode
