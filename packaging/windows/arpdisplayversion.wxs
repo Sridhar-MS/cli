@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi" xmlns:dep="http://schemas.microsoft.com/wix/DependencyExtension">
+  <?include "Variables.wxi" ?>
+  <Fragment>
+        <CustomAction Id="ChangeARPDisplayVersion" Property="FOOOOOOBAR" Execute="immediate" Return="check"  ExeCommand= "&quot;[SystemFolder]reg.exe&quot; ADD &quot;HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{[ProductCode]}&quot; /v DisplayVersion /t REG_SZ /d $(var.ARPDisplayVersion) /f" />
+
+        <InstallExecuteSequence>
+            <Custom Action="ChangeARPDisplayVersion" After="InstallFinalize" />
+        </InstallExecuteSequence>
+    </Fragment>
+</Wix>

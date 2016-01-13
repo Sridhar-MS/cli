@@ -9,10 +9,11 @@
   <?define Manufacturer     =   "Microsoft Corporation" ?>
   <?define ProductName      =   "Microsoft Dotnet CLI for Windows" ?>
   <?define ProductLanguage  =   "1033" ?>
-  <?define ProductVersion   =   "$(var.Dotnet_ProductVersion)" ?>
+  <?define ProductVersion   =   "$(var.Dotnet_ProductVersion)" ?>  
   <?define ProductFamily    =   "dotnet" ?>
   <?define ProductEdition   =   "001dotnet" ?>
   <?define LCID  = "$(var.ProductLanguage)"?>
+  <?define ARPDisplayVersion   =   "$(var.BuildVersion) ($(var.DisplayVersion))" ?>
   
   <?define Platform   =   "$(sys.BUILDARCH)" ?>
   <?if $(var.Platform)=x86?>  

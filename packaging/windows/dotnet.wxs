@@ -5,7 +5,7 @@
         <Package Compressed="yes" InstallerVersion="200" />
         <Upgrade Id="$(var.UpgradeCode)">
           <UpgradeVersion Minimum="$(var.ProductVersion)" IncludeMinimum="no" OnlyDetect="yes" Property="NEWERVERSIONDETECTED" Language="$(var.LCID)" />
-          <UpgradeVersion Minimum="0.0.0.0" Maximum="$(var.ProductVersion)" IncludeMinimum="no" IncludeMaximum="no" Property="WIX_DOWNGRADE_DETECTED" Language="$(var.LCID)" />
+          <UpgradeVersion Minimum="0.0.0.0" Maximum="$(var.ProductVersion)" IncludeMinimum="no" IncludeMaximum="no" Property="WIX_UPGRADE_DETECTED" Language="$(var.LCID)" />
         </Upgrade>
         <InstallExecuteSequence>
             <RemoveExistingProducts Before="InstallInitialize" />
@@ -22,7 +22,6 @@
         <Property Id="ProductEdition" Value="$(var.ProductEdition)" />
         <Property Id="ProductCPU" Value="$(var.Platform)" />
         <Property Id="RTM_ProductVersion" Value="$(var.Dotnet_ProductVersion)" />
-        <!--Property Id="ARPNOMODIFY" Value="1" /-->
 
         <WixVariable Id="WixUILicenseRtf" Value="$(var.MicrosoftEula)" />
 
@@ -30,6 +29,8 @@
         <UIRef Id="WixUI_InstallDir" />
 
         <CustomActionRef Id="WixBroadcastEnvironmentChange" />
+        <CustomActionRef Id="WixExitEarlyWithSuccess" />
+        <CustomActionRef Id="ChangeARPDisplayVersion" />
     </Product>
     <Fragment>
         <Directory Id="TARGETDIR" Name="SourceDir">

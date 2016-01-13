@@ -27,6 +27,14 @@
         <Environment Id="E_DOTNET_HOME" Name="DOTNET_HOME" Value="[DOTNETHOME]" Permanent="no" Part="all" Action="set" System="yes" />
 		<?endif?>
       </Component>
+
+      <!--Set RegistryKey for setting the Add/Remove Program DisplayVersion>
+      <Component Id="ARPDisplayVersionRegistry" Directory="TARGETDIR" Guid="*">
+        <RegistryKey Root="HKLM" Key="SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{[ProductCode]}">
+          <RegistryValue Action="write" Name="DisplayVersion" Type="string" Value="$(var.ARPDisplayVersion)" KeyPath="yes"/>
+          <RegistryValue Action="write" Name="FooVersion" Type="string" Value="$(var.ARPDisplayVersion)"/>
+        </RegistryKey>
+      </Component-->
     </ComponentGroup>
   </Fragment>
 </Wix>

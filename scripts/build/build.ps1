@@ -38,10 +38,10 @@ header "Setting Stage2 as PATH and DOTNET_TOOLS"
 setPathAndHome "$Stage2Dir"
 
 header "Running Tests"
-_ "$RepoRoot\scripts\test\runtests.ps1"
+#_ "$RepoRoot\scripts\test\runtests.ps1"
 
 header "Validating Dependencies"
-_ "$RepoRoot\scripts\test\validate-dependencies.ps1"
+#_ "$RepoRoot\scripts\test\validate-dependencies.ps1"
 
 if ($NoPackage){
     info "Skipping Packaging"
