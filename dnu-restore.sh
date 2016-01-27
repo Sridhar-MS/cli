@@ -66,8 +66,12 @@ if [ $doInstall = true ] ; then
     chmod a+x $DNX_ROOT/dnu $DNX_ROOT/dnx   
 fi
 
-echo "Clearing dnx cache at - ~/.dnx"
+echo "Clearing dnx cache"
 rm -rf ~/.dnx
+rm -rf ~/.local/share/dnu/cache
+rm -rf ~/.local/share/NuGet/v3-cache
+rm -rf ~/.nuget
+rm -rf /tmp/NuGetScratch
 
 # Restore packages
 echo "Restoring packages"
