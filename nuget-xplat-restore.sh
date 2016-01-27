@@ -55,8 +55,12 @@ if [ $doInstall = true ] ; then
 fi
 
 
-echo "Clearing nuget cache at - ~/.nuget"
+echo "Clearing nuget cache"
+rm -rf ~/.dnx
+rm -rf ~/.local/share/dnu/cache
+rm -rf ~/.local/share/NuGet/v3-cache
 rm -rf ~/.nuget
+rm -rf /tmp/NuGetScratch
 
 # Restore packages
 echo "Restoring packages"
