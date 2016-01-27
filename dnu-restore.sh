@@ -66,6 +66,9 @@ if [ $doInstall = true ] ; then
     chmod a+x $DNX_ROOT/dnu $DNX_ROOT/dnx   
 fi
 
+echo "Clearing dnx cache at - ~/.dnx"
+rm -rf ~/.dnx
+
 # Restore packages
 echo "Restoring packages"
 
