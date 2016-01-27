@@ -54,6 +54,10 @@ if [ $doInstall = true ] ; then
     tar -xzf "$CLI_DIR/dotnet.tar.gz" -C "$CLI_DIR"
 fi
 
+
+echo "Clearing nuget cache at - ~/.nuget"
+rm -rf ~/.nuget
+
 # Restore packages
 echo "Restoring packages"
 "$CLI_ROOT/corehost" "$CLI_ROOT/NuGet.CommandLine.XPlat.dll" restore --runtime "win7-x64" --runtime "osx.10.10-x64" --runtime "ubuntu.14.04-x64" --runtime "centos.7.1-x64" "$DIR/src/Microsoft.DotNet.Cli" 
