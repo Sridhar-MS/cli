@@ -6,6 +6,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
 namespace Microsoft.DotNet.Tools.Test.Utilities
@@ -75,14 +76,38 @@ namespace Microsoft.DotNet.Tools.Test.Utilities
             return RunProcess(commandPath, args, stdOut, stdErr);
         }
 
-        public void Kill()
+        public void Kill(bool killProcessTree = false)
         {
             if (CurrentProcess == null)
             {
                 throw new InvalidOperationException("No process is available to be killed");
             }
-
-            CurrentProcess.Kill();
+            
+            if (killProcessTree)
+            {
+                KillProcessTree(CurrentProcess);
+            }
+            else
+            {
+                CurrentProcess.Kill();
+            }
+            
+            if (!CurrentProcess.HasExited)
+            {
+                throw new Exception($"Unable to kill process - {CurrentProcess.Id}");
+            }
+        }
+        
+        private void KillProcessTree(Process process)
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                StartProcess("taskkill", $"/T /F /PID {process.Id}").WaitForExit();                
+            }
+            else
+            {
+                StartProcess("sh", $"-c \"kill -9 -$(ps -o pgid= {process.Id} | grep -o '[0-9]*')\"").WaitForExit();
+            }            
         }
         
         private void ResolveCommand(ref string executable, ref string args)
@@ -153,7 +178,8 @@ namespace Microsoft.DotNet.Tools.Test.Utilities
                 FileName = executable,
                 Arguments = args,
                 RedirectStandardError = true,
-                RedirectStandardOutput = true
+                RedirectStandardOutput = true,
+                RedirectStandardInput = true
             };
 
             foreach (var item in Environment)

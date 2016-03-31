@@ -7,6 +7,7 @@ using Microsoft.DotNet.TestFramework;
 using Microsoft.DotNet.Tools.Test.Utilities;
 using Xunit;
 using System.Net.Http;
+using System.Threading.Tasks;
 using FluentAssertions;
 
 namespace Microsoft.DotNet.Tools.Run.Tests
@@ -15,74 +16,33 @@ namespace Microsoft.DotNet.Tools.Run.Tests
     {
         private const string PortableAppsTestBase = "PortableTests";
         private const string RunTestsBase = "RunTestsApps";
-
-        [WindowsOnlyFact]
-        public void RunsSingleTarget()
-        {
-            TestInstance instance = TestAssetsManager.CreateTestInstance(Path.Combine(RunTestsBase, "TestAppFullClr"))
-                                                     .WithLockFiles()
-                                                     .WithBuildArtifacts();
-            new RunCommand(instance.TestRoot).Execute().Should().Pass();
-        }
-
-        [Fact]
-        public void RunsDefaultWhenPresent()
-        {
-            TestInstance instance = TestAssetsManager.CreateTestInstance(Path.Combine(RunTestsBase, "TestAppMultiTarget"))
-                                                     .WithLockFiles()
-                                                     .WithBuildArtifacts();
-            new RunCommand(instance.TestRoot).Execute().Should().Pass();
-        }
-
-        [Fact]
-        public void FailsWithMultipleTargetAndNoDefault()
-        {
-            TestInstance instance = TestAssetsManager.CreateTestInstance(Path.Combine(RunTestsBase, "TestAppMultiTargetNoCoreClr"))
-                                                     .WithLockFiles()
-                                                     .WithBuildArtifacts();
-            new RunCommand(instance.TestRoot).Execute().Should().Pass();            
-        }
-
-        [Fact]
-        public void ItRunsPortableApps()
-        {
-            TestInstance instance = TestAssetsManager.CreateTestInstance(Path.Combine(PortableAppsTestBase, "PortableApp"))
-                                                     .WithLockFiles()
-                                                     .WithBuildArtifacts();
-            new RunCommand(instance.TestRoot).Execute().Should().Pass();
-        }
-
-        [Fact(Skip = "https://github.com/dotnet/cli/issues/1940")]
-        public void ItRunsPortableAppsWithNative()
-        {
-            TestInstance instance = TestAssetsManager.CreateTestInstance(Path.Combine(PortableAppsTestBase, "PortableAppWithNative"))
-                                                     .WithLockFiles()
-                                                     .WithBuildArtifacts();
-            new RunCommand(instance.TestRoot).Execute().Should().Pass();
-        }
+        private const string KestrelHelloWorldBase = "KestrelHelloWorld";
+        private const string KestrelHelloWorldPortable = "KestrelHelloWorldPortable";
         
         [Fact]
         public void ItRunsKestrelPortableFatApp()
         {
-            TestInstance instance = TestAssetsManager.CreateTestInstance(Path.Combine(PortableAppsTestBase, "StandaloneApp"))
+            TestInstance instance = TestAssetsManager.CreateTestInstance(KestrelHelloWorldBase)
                                                      .WithLockFiles()
                                                      .WithBuildArtifacts();
-            string args = Guid.NewGuid().ToString();
-            var runCommand = new RunCommand(instance.TestRoot);
-            runCommand.ExecuteAsync(args);
-            TestGetRequest(args);
-            runCommand.Kill();
+            
+            var url = NetworkHelper.GetLocalhostUrlWithFreePort();
+            var args = $"{url} {Guid.NewGuid().ToString()}";
+            var runCommand = new RunCommand(Path.Combine(instance.TestRoot, KestrelHelloWorldPortable));
+            
+            try
+            {                
+                runCommand.ExecuteAsync(args);
+                NetworkHelper.IsServerUp(url).Should().BeTrue($"Unable to connect to kestrel server - {KestrelHelloWorldPortable} @ {url}");
+                TestGetRequest(url, args);
+            }
+            finally
+            {                
+                runCommand.Kill(true);
+            }
         }
 
-        [Fact]
-        public void ItRunsStandaloneApps()
-        {
-            TestInstance instance = TestAssetsManager.CreateTestInstance(Path.Combine(PortableAppsTestBase, "StandaloneApp"))
-                                                     .WithLockFiles()
-                                                     .WithBuildArtifacts();
-            new RunCommand(instance.TestRoot).Execute().Should().Pass();
-        }
-
+        
 
         private void CopyProjectToTempDir(string projectDir, TempDirectory tempDir)
         {
@@ -98,17 +58,16 @@ namespace Microsoft.DotNet.Tools.Run.Tests
             return Path.Combine(projectDir.Path, "project.json");
         }
 
-        private static void TestGetRequest(string expectedResponse)
+        private static void TestGetRequest(string url, string expectedResponse)
         {
             using (var client = new HttpClient())
             {
-                client.BaseAddress = new Uri($"http://localhost:5000/");
+                client.BaseAddress = new Uri(url);
                 
                 HttpResponseMessage response = client.GetAsync("").Result;
                 if (response.IsSuccessStatusCode)
                 {
                     var responseString = response.Content.ReadAsStringAsync().Result;
-                    Console.WriteLine($"responseString >>>>>>>>>>>>>> {responseString}");
                     responseString.Should().Contain(expectedResponse);                    
                 }
             }

@@ -18,7 +18,7 @@
   "frameworks": {
     "netstandardapp1.5": {
       "dependencies": {
-        "Microsoft.NETCore.App": "1.0.0-rc2-23925"
+        "Microsoft.NETCore.App": "1.0.0-rc2-23930"
       },
       "imports": [
         "dnxcore50",

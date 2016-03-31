@@ -4,6 +4,7 @@
 using System;
 using System.IO;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -17,6 +18,7 @@ namespace SampleApp
     public class Startup
     {
         private static string Args { get; set; }
+        private static CancellationTokenSource ServerCancellationTokenSource { get; set; }
 
         public void Configure(IApplicationBuilder app, ILoggerFactory loggerFactory, IApplicationEnvironment env)
         {
@@ -46,22 +48,34 @@ namespace SampleApp
                 var content = $"Hello world!{Environment.NewLine}Received '{Args}' from command line.";
                 context.Response.ContentLength = content.Length;
                 context.Response.ContentType = "text/plain";
-                await context.Response.WriteAsync(content);
+                context.Response.WriteAsync(content).Wait();
+                
+                // exit the server once serving the first request
+                //ServerCancellationTokenSource.Cancel();
             });
         }
 
-        public static void Main(string[] args)
+        public static int Main(string[] args)
         {
+            if (args.Length == 0)
+            {
+                Console.WriteLine("KestrelHelloWorld <url to host>");
+                return 1;
+            }
+            
+            var url = new Uri(args[0]);            
             Args = string.Join(" ", args);
-            Console.WriteLine(Args);
-
+            
             var host = new WebHostBuilder()
                 .UseServer("Microsoft.AspNetCore.Server.Kestrel")
-                .UseUrls("http://localhost:5000")
+                .UseUrls(url.ToString())
                 .UseStartup<Startup>()
                 .Build();
 
-            host.Run();
+            ServerCancellationTokenSource = new CancellationTokenSource();            
+            host.Run(ServerCancellationTokenSource.Token);
+            
+            return 0;
         }
     }
 }
