@@ -6,6 +6,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Microsoft.DotNet.Tools.Test.Utilities
 {
@@ -14,6 +15,8 @@ namespace Microsoft.DotNet.Tools.Test.Utilities
         protected string _command;
 
         public string WorkingDirectory { get; set; }
+
+        public Process CurrentProcess { get; set; }
 
         public Dictionary<string, string> Environment { get; } = new Dictionary<string, string>();
 
@@ -71,6 +74,16 @@ namespace Microsoft.DotNet.Tools.Test.Utilities
 
             return RunProcess(commandPath, args, stdOut, stdErr);
         }
+
+        public void Kill()
+        {
+            if (CurrentProcess == null)
+            {
+                throw new InvalidOperationException("No process is available to be killed");
+            }
+
+            CurrentProcess.Kill();
+        }
         
         private void ResolveCommand(ref string executable, ref string args)
         {
@@ -94,17 +107,17 @@ namespace Microsoft.DotNet.Tools.Test.Utilities
 
         private CommandResult RunProcess(string executable, string args, StreamForwarder stdOut, StreamForwarder stdErr)
         {
-            var process = StartProcess(executable, args);
-            var threadOut = stdOut.BeginRead(process.StandardOutput);
-            var threadErr = stdErr.BeginRead(process.StandardError);
+            CurrentProcess = StartProcess(executable, args);
+            var threadOut = stdOut.BeginRead(CurrentProcess.StandardOutput);
+            var threadErr = stdErr.BeginRead(CurrentProcess.StandardError);
 
-            process.WaitForExit();
+            CurrentProcess.WaitForExit();
             threadOut.Join();
             threadErr.Join();
 
             var result = new CommandResult(
-                process.StartInfo,
-                process.ExitCode,
+                CurrentProcess.StartInfo,
+                CurrentProcess.ExitCode,
                 stdOut.CapturedOutput,
                 stdErr.CapturedOutput);
 
@@ -113,22 +126,22 @@ namespace Microsoft.DotNet.Tools.Test.Utilities
         
         private Task<CommandResult> RunProcessAsync(string executable, string args, StreamForwarder stdOut, StreamForwarder stdErr)
         {
-            var process = StartProcess(executable, args);
-            var threadOut = stdOut.BeginRead(process.StandardOutput);
-            var threadErr = stdErr.BeginRead(process.StandardError);
+            CurrentProcess = StartProcess(executable, args);
+            var threadOut = stdOut.BeginRead(CurrentProcess.StandardOutput);
+            var threadErr = stdErr.BeginRead(CurrentProcess.StandardError);
             
             var tcs = new TaskCompletionSource<CommandResult>();
-            process.Exited += (sender, args) => 
+            CurrentProcess.Exited += (sender, arg) =>
             {
                 threadOut.Join();
                 threadErr.Join();
                 var result = new CommandResult(
-                                    process.StartInfo,
-                                    process.ExitCode,
+                                    CurrentProcess.StartInfo,
+                                    CurrentProcess.ExitCode,
                                     stdOut.CapturedOutput,
                                     stdErr.CapturedOutput);
                 tcs.SetResult(result);
-            }
+            };
             
             return tcs.Task;
         }

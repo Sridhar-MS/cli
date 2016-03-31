@@ -6,6 +6,8 @@ using System.IO;
 using Microsoft.DotNet.TestFramework;
 using Microsoft.DotNet.Tools.Test.Utilities;
 using Xunit;
+using System.Net.Http;
+using FluentAssertions;
 
 namespace Microsoft.DotNet.Tools.Run.Tests
 {
@@ -38,7 +40,7 @@ namespace Microsoft.DotNet.Tools.Run.Tests
             TestInstance instance = TestAssetsManager.CreateTestInstance(Path.Combine(RunTestsBase, "TestAppMultiTargetNoCoreClr"))
                                                      .WithLockFiles()
                                                      .WithBuildArtifacts();
-            new RunCommand(instance.TestRoot).Execute().Should().Fail();
+            new RunCommand(instance.TestRoot).Execute().Should().Pass();            
         }
 
         [Fact]
@@ -65,7 +67,11 @@ namespace Microsoft.DotNet.Tools.Run.Tests
             TestInstance instance = TestAssetsManager.CreateTestInstance(Path.Combine(PortableAppsTestBase, "StandaloneApp"))
                                                      .WithLockFiles()
                                                      .WithBuildArtifacts();
-            new RunCommand(instance.TestRoot).Execute().Should().Pass();
+            string args = Guid.NewGuid().ToString();
+            var runCommand = new RunCommand(instance.TestRoot);
+            runCommand.ExecuteAsync(args);
+            TestGetRequest(args);
+            runCommand.Kill();
         }
 
         [Fact]
@@ -90,6 +96,22 @@ namespace Microsoft.DotNet.Tools.Run.Tests
         private string GetProjectPath(TempDirectory projectDir)
         {
             return Path.Combine(projectDir.Path, "project.json");
+        }
+
+        private static void TestGetRequest(string expectedResponse)
+        {
+            using (var client = new HttpClient())
+            {
+                client.BaseAddress = new Uri($"http://localhost:5000/");
+                
+                HttpResponseMessage response = client.GetAsync("").Result;
+                if (response.IsSuccessStatusCode)
+                {
+                    var responseString = response.Content.ReadAsStringAsync().Result;
+                    Console.WriteLine($"responseString >>>>>>>>>>>>>> {responseString}");
+                    responseString.Should().Contain(expectedResponse);                    
+                }
+            }
         }
     }
 }

@@ -16,6 +16,8 @@ namespace SampleApp
 {
     public class Startup
     {
+        private static string Args { get; set; }
+
         public void Configure(IApplicationBuilder app, ILoggerFactory loggerFactory, IApplicationEnvironment env)
         {
             var ksi = app.ServerFeatures.Get<IKestrelServerInformation>();
@@ -41,19 +43,21 @@ namespace SampleApp
                 Console.WriteLine($"Peer: {connectionFeature.RemoteIpAddress?.ToString()} {connectionFeature.RemotePort}");
                 Console.WriteLine($"Sock: {connectionFeature.LocalIpAddress?.ToString()} {connectionFeature.LocalPort}");
 
-                context.Response.ContentLength = 11;
+                var content = $"Hello world!{Environment.NewLine}Received '{Args}' from command line.";
+                context.Response.ContentLength = content.Length;
                 context.Response.ContentType = "text/plain";
-                await context.Response.WriteAsync("Hello world");
+                await context.Response.WriteAsync(content);
             });
         }
 
         public static void Main(string[] args)
         {
+            Args = string.Join(" ", args);
+            Console.WriteLine(Args);
+
             var host = new WebHostBuilder()
                 .UseServer("Microsoft.AspNetCore.Server.Kestrel")
                 .UseUrls("http://localhost:5000")
-                .UseDefaultHostingConfiguration(args)
-                .UseContentRoot(Directory.GetCurrentDirectory())
                 .UseStartup<Startup>()
                 .Build();
 

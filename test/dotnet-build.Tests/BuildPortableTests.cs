@@ -1,15 +1,15 @@
 ﻿using System.IO;
 using Microsoft.DotNet.Tools.Test.Utilities;
 using Xunit;
+using Microsoft.DotNet.TestFramework;
 
 namespace Microsoft.DotNet.Tools.Builder.Tests
 {
     public class BuildPortableTests : TestBase
     {
-        public string PortableApp { get; } = "PortableApp";
-        public string PortableAppRoot { get; } = Path.Combine("PortableTests", PortableApp);
-        public string KestrelPortableApp { get; } = "KestrelHelloWorldPortable";
-        public string KestrelPortableAppRoot { get; } = Path.Combine("KestrelHelloWorld", KestrelPortableApp);
+        public static string PortableApp { get; } = "PortableApp";
+        public static string PortableAppRoot { get; } = Path.Combine("PortableTests", PortableApp);
+        public static string KestrelPortableApp { get; } = "KestrelHelloWorldPortable";
         
         [Fact]
         public void BuildingPortableAppProducesExpectedArtifacts()
@@ -23,16 +23,17 @@ namespace Microsoft.DotNet.Tools.Builder.Tests
         [Fact]
         public void BuildingKestrelPortableFatAppProducesExpectedArtifacts()
         {
-            var testInstance = TestAssetsManager.CreateTestInstance(KestrelPortableAppRoot)
+            var testInstance = TestAssetsManager.CreateTestInstance("KestrelHelloWorld")
                 .WithLockFiles();
 
-            BuildAndTest(testInstance.TestRoot);
+            BuildAndTest(Path.Combine(testInstance.TestRoot, KestrelPortableApp));
         }
         
         private static void BuildAndTest(string testRoot)
         {
             string appName =  Path.GetFileName(testRoot);
             
+
             var result = new BuildCommand(
                 projectPath: testRoot)
                 .ExecuteWithCapturedOutput();
@@ -46,14 +47,13 @@ namespace Microsoft.DotNet.Tools.Builder.Tests
             netstandardappOutput.Should()
                 .Exist().And
                 .OnlyHaveFiles(new[]
-                {
-                    $"{appName}.deps",
+                {                    
                     $"{appName}.deps.json",
                     $"{appName}.dll",
                     $"{appName}.pdb",
-                    $"{appName}.runtimeconfig.json"
+                    $"{appName}.runtimeconfig.json",
+                    $"{appName}.runtimeconfig.dev.json"
                 });
-            
         }
     }
 }

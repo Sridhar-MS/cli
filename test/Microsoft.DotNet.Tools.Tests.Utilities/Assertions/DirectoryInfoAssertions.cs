@@ -66,18 +66,17 @@ namespace Microsoft.DotNet.Tools.Test.Utilities
         }
         
         public AndConstraint<DirectoryInfoAssertions> OnlyHaveFiles(IEnumerable<string> expectedFiles)
-        {
-            var actualFiles = _dirInfo.EnumerateFiles("*", SearchOption.TopDirectoryOnly);            
-            var missingFiles = expectedFiles.Except(actualFiles);
-            var extraFiles = actualFiles.Except(expectedFiles);
-            
+        {            
+            var actualFiles = _dirInfo.EnumerateFiles("*", SearchOption.TopDirectoryOnly).Select(f => f.Name);
+            var missingFiles = Enumerable.Except(expectedFiles, actualFiles);
+            var extraFiles = Enumerable.Except(actualFiles, expectedFiles);
+            var nl = Environment.NewLine;
+
             Execute.Assertion.ForCondition(!missingFiles.Any())
-                .FailWith($"Following files cannot be found inside directory {_dirInfo.FullName} {Environment.NewLine} 
-                {string.Join(Environment.NewLine, missingFiles)}");
+                .FailWith($"Following files cannot be found inside directory {_dirInfo.FullName} {nl} {string.Join(nl, missingFiles)}");
             
-            Execute.Assertion.ForCondition(extraFiles.Any())
-                .FailWith($"Following extra files are found inside directory {_dirInfo.FullName} {Environment.NewLine} 
-                {string.Join(Environment.NewLine, extraFiles)}");
+            Execute.Assertion.ForCondition(!extraFiles.Any())
+                .FailWith($"Following extra files are found inside directory {_dirInfo.FullName} {nl} {string.Join(nl, extraFiles)}");
 
             return new AndConstraint<DirectoryInfoAssertions>(this);
         }
