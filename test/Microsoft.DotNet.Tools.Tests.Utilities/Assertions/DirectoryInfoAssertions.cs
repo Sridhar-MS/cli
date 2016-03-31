@@ -64,5 +64,22 @@ namespace Microsoft.DotNet.Tools.Test.Utilities
 
             return new AndConstraint<DirectoryInfoAssertions>(new DirectoryInfoAssertions(dir));
         }
+        
+        public AndConstraint<DirectoryInfoAssertions> OnlyHaveFiles(IEnumerable<string> expectedFiles)
+        {
+            var actualFiles = _dirInfo.EnumerateFiles("*", SearchOption.TopDirectoryOnly);            
+            var missingFiles = expectedFiles.Except(actualFiles);
+            var extraFiles = actualFiles.Except(expectedFiles);
+            
+            Execute.Assertion.ForCondition(!missingFiles.Any())
+                .FailWith($"Following files cannot be found inside directory {_dirInfo.FullName} {Environment.NewLine} 
+                {string.Join(Environment.NewLine, missingFiles)}");
+            
+            Execute.Assertion.ForCondition(extraFiles.Any())
+                .FailWith($"Following extra files are found inside directory {_dirInfo.FullName} {Environment.NewLine} 
+                {string.Join(Environment.NewLine, extraFiles)}");
+
+            return new AndConstraint<DirectoryInfoAssertions>(this);
+        }
     }
 }

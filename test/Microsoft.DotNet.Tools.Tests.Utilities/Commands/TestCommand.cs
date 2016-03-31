@@ -37,6 +37,22 @@ namespace Microsoft.DotNet.Tools.Test.Utilities
 
             return RunProcess(commandPath, args, stdOut, stdErr);
         }
+        
+        public virtual Task<CommandResult> ExecuteAsync(string args = "")
+        {
+            var commandPath = _command;
+            ResolveCommand(ref commandPath, ref args);
+
+            Console.WriteLine($"Executing - {commandPath} {args}");
+
+            var stdOut = new StreamForwarder();
+            var stdErr = new StreamForwarder();
+
+            stdOut.ForwardTo(writeLine: Reporter.Output.WriteLine);
+            stdErr.ForwardTo(writeLine: Reporter.Output.WriteLine);
+
+            return RunProcessAsync(commandPath, args, stdOut, stdErr);
+        }
 
         public virtual CommandResult ExecuteWithCapturedOutput(string args = "")
         {
@@ -78,6 +94,47 @@ namespace Microsoft.DotNet.Tools.Test.Utilities
 
         private CommandResult RunProcess(string executable, string args, StreamForwarder stdOut, StreamForwarder stdErr)
         {
+            var process = StartProcess(executable, args);
+            var threadOut = stdOut.BeginRead(process.StandardOutput);
+            var threadErr = stdErr.BeginRead(process.StandardError);
+
+            process.WaitForExit();
+            threadOut.Join();
+            threadErr.Join();
+
+            var result = new CommandResult(
+                process.StartInfo,
+                process.ExitCode,
+                stdOut.CapturedOutput,
+                stdErr.CapturedOutput);
+
+            return result;
+        }
+        
+        private Task<CommandResult> RunProcessAsync(string executable, string args, StreamForwarder stdOut, StreamForwarder stdErr)
+        {
+            var process = StartProcess(executable, args);
+            var threadOut = stdOut.BeginRead(process.StandardOutput);
+            var threadErr = stdErr.BeginRead(process.StandardError);
+            
+            var tcs = new TaskCompletionSource<CommandResult>();
+            process.Exited += (sender, args) => 
+            {
+                threadOut.Join();
+                threadErr.Join();
+                var result = new CommandResult(
+                                    process.StartInfo,
+                                    process.ExitCode,
+                                    stdOut.CapturedOutput,
+                                    stdErr.CapturedOutput);
+                tcs.SetResult(result);
+            }
+            
+            return tcs.Task;
+        }
+        
+        private Process StartProcess(string executable, string args)
+        {
             var psi = new ProcessStartInfo
             {
                 FileName = executable,
@@ -103,21 +160,7 @@ namespace Microsoft.DotNet.Tools.Test.Utilities
 
             process.EnableRaisingEvents = true;
             process.Start();
-
-            var threadOut = stdOut.BeginRead(process.StandardOutput);
-            var threadErr = stdErr.BeginRead(process.StandardError);
-
-            process.WaitForExit();
-            threadOut.Join();
-            threadErr.Join();
-
-            var result = new CommandResult(
-                process.StartInfo,
-                process.ExitCode,
-                stdOut.CapturedOutput,
-                stdErr.CapturedOutput);
-
-            return result;
+            return process;
         }
     }
 }

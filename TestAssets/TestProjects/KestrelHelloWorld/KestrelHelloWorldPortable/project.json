@@ -1,0 +1,32 @@
+{
+  "version": "1.0.0-*",
+  "dependencies": {
+    "Microsoft.AspNetCore.Internal.libuv-Darwin": "1.0.0-*",
+    "Microsoft.AspNetCore.Internal.libuv-Windows": "1.0.0-*",
+    "Microsoft.AspNetCore.Server.Kestrel": "1.0.0-*",
+    "Microsoft.AspNet.Hosting": "1.0.0-*",
+    "Microsoft.AspNetCore.Server.Kestrel.Https": "1.0.0-*",
+    "Microsoft.Extensions.Logging.Console": "1.0.0-*"
+  },
+  "compilationOptions": {
+    "emitEntryPoint": true
+  },
+  "compile": [
+    "../src/*.cs"
+  ],
+  
+  "frameworks": {
+    "netstandard1.5": {
+      "dependencies": {
+        "Microsoft.NETCore.App": {
+          "type": "platform",
+          "version": "1.0.0-rc2-23925"
+        }
+      },
+      "imports": [
+        "dnxcore50",
+        "portable-net45+win8"
+      ]
+    }
+  }
+}

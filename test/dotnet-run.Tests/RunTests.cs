@@ -58,6 +58,15 @@ namespace Microsoft.DotNet.Tools.Run.Tests
                                                      .WithBuildArtifacts();
             new RunCommand(instance.TestRoot).Execute().Should().Pass();
         }
+        
+        [Fact]
+        public void ItRunsKestrelPortableFatApp()
+        {
+            TestInstance instance = TestAssetsManager.CreateTestInstance(Path.Combine(PortableAppsTestBase, "StandaloneApp"))
+                                                     .WithLockFiles()
+                                                     .WithBuildArtifacts();
+            new RunCommand(instance.TestRoot).Execute().Should().Pass();
+        }
 
         [Fact]
         public void ItRunsStandaloneApps()

@@ -78,6 +78,12 @@ namespace Microsoft.DotNet.Tools.Test.Utilities
             args = $"run {BuildArgs()} {args}";
             return base.Execute(args);
         }
+        
+        public override Task<CommandResult> ExecuteAsync(string args = "")
+        {
+            args = $"run {BuildArgs()} {args}";
+            return base.ExecuteAsync(args);
+        }
 
         private string BuildArgs()
         {
