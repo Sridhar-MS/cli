@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
+using System.Threading;
 using Microsoft.DotNet.ProjectModel;
 using FluentAssertions;
 
@@ -13,41 +14,52 @@ namespace Microsoft.DotNet.Tools.Test.Utilities
     public class NetworkHelper
     {
         // in milliseconds
-        private const int PingTimeout = 10000;
-        
+        private const int Timeout = 20000;
+
         private static Queue<TcpListener> s_PortPool = new Queue<TcpListener>();
-        
+
         public static string Localhost { get; } = "http://localhost";
-        
+
         public static bool IsServerUp(string url)
         {
-            using(var ping = new Ping())
+            return SpinWait.SpinUntil(() =>
             {
-                var pingReply = ping.SendPingAsync(url, PingTimeout).Result;
-                return pingReply.Status == IPStatus.Success;
-            }
+                using (var client = new HttpClient())
+                {
+                    try
+                    {
+                        client.BaseAddress = new Uri(url);
+                        HttpResponseMessage response = client.GetAsync("").Result;
+                        return response.IsSuccessStatusCode;
+                    }
+                    catch (Exception)
+                    {
+                        return false;
+                    }
+                }
+            }, Timeout);
         }
-        
+
         public static void TestGetRequest(string url, string expectedResponse)
         {
             using (var client = new HttpClient())
             {
                 client.BaseAddress = new Uri(url);
-                
+
                 HttpResponseMessage response = client.GetAsync("").Result;
                 if (response.IsSuccessStatusCode)
                 {
                     var responseString = response.Content.ReadAsStringAsync().Result;
-                    responseString.Should().Contain(expectedResponse);                    
+                    responseString.Should().Contain(expectedResponse);
                 }
             }
         }
-        
+
         public static int GetFreePort()
         {
-            lock(s_PortPool)
+            lock (s_PortPool)
             {
-                if(s_PortPool.Count == 0)
+                if (s_PortPool.Count == 0)
                 {
                     for (int i = 0; i < 20; i++)
                     {
@@ -56,17 +68,17 @@ namespace Microsoft.DotNet.Tools.Test.Utilities
                         s_PortPool.Enqueue(tcpl);
                     }
                 }
-                
+
                 var currentTcpl = s_PortPool.Dequeue();
                 var port = ((IPEndPoint)currentTcpl.LocalEndpoint).Port;
                 currentTcpl.Stop();
                 return port;
             }
         }
-        
+
         public static string GetLocalhostUrlWithFreePort()
         {
-            return $"http://{Localhost}:{GetFreePort()}";
+            return $"{Localhost}:{GetFreePort()}/";
         }
     }
 }

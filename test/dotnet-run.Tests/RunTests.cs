@@ -18,6 +18,7 @@ namespace Microsoft.DotNet.Tools.Run.Tests
         private const string RunTestsBase = "RunTestsApps";
         private const string KestrelHelloWorldBase = "KestrelHelloWorld";
         private const string KestrelHelloWorldPortable = "KestrelHelloWorldPortable";
+        private const string KestrelHelloWorldStandalone = "KestrelHelloWorldStandalone";
         
         [Fact]
         public void ItRunsKestrelPortableFatApp()
@@ -34,7 +35,30 @@ namespace Microsoft.DotNet.Tools.Run.Tests
             {                
                 runCommand.ExecuteAsync(args);
                 NetworkHelper.IsServerUp(url).Should().BeTrue($"Unable to connect to kestrel server - {KestrelHelloWorldPortable} @ {url}");
-                TestGetRequest(url, args);
+                NetworkHelper.TestGetRequest(url, args);
+            }
+            finally
+            {                
+                runCommand.Kill(true);
+            }
+        }
+        
+        [Fact]
+        public void ItRunsKestrelStandaloneApp()
+        {
+            TestInstance instance = TestAssetsManager.CreateTestInstance(KestrelHelloWorldBase)
+                                                     .WithLockFiles()
+                                                     .WithBuildArtifacts();
+            
+            var url = NetworkHelper.GetLocalhostUrlWithFreePort();
+            var args = $"{url} {Guid.NewGuid().ToString()}";
+            var runCommand = new RunCommand(Path.Combine(instance.TestRoot, KestrelHelloWorldStandalone));
+            
+            try
+            {                
+                runCommand.ExecuteAsync(args);
+                NetworkHelper.IsServerUp(url).Should().BeTrue($"Unable to connect to kestrel server - {KestrelHelloWorldStandalone} @ {url}");
+                NetworkHelper.TestGetRequest(url, args);
             }
             finally
             {                
@@ -56,21 +80,6 @@ namespace Microsoft.DotNet.Tools.Run.Tests
         private string GetProjectPath(TempDirectory projectDir)
         {
             return Path.Combine(projectDir.Path, "project.json");
-        }
-
-        private static void TestGetRequest(string url, string expectedResponse)
-        {
-            using (var client = new HttpClient())
-            {
-                client.BaseAddress = new Uri(url);
-                
-                HttpResponseMessage response = client.GetAsync("").Result;
-                if (response.IsSuccessStatusCode)
-                {
-                    var responseString = response.Content.ReadAsStringAsync().Result;
-                    responseString.Should().Contain(expectedResponse);                    
-                }
-            }
         }
     }
 }
