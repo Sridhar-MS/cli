@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using Microsoft.DotNet.Cli.Build.Framework;
 
 using static Microsoft.DotNet.Cli.Build.FS;
@@ -319,12 +320,6 @@ namespace Microsoft.DotNet.Cli.Build
         [Target]
         public static BuildTargetResult RunXUnitTests(BuildTargetContext c)
         {
-            // Need to load up the VS Vars
-            var dotnet = DotNetCli.Stage2;
-            var vsvars = LoadVsVars(c);
-
-            var configuration = c.BuildContext.Get<string>("Configuration");
-
             // Copy the test projects
             var testProjectsDir = Path.Combine(Dirs.TestOutput, "TestProjects");
             Rmdir(testProjectsDir);
@@ -333,19 +328,23 @@ namespace Microsoft.DotNet.Cli.Build
 
             // Run the tests and set the VS vars in the environment when running them
             var failingTests = new List<string>();
+            var testResults = new Dictionary<Task<CommandResult>, string>();
             foreach (var project in TestProjects)
             {
-                c.Info($"Running tests in: {project}");
-                var result = dotnet.Test("--configuration", configuration, "-xml", $"{project}-testResults.xml", "-notrait", "category=failing")
-                    .WorkingDirectory(Path.Combine(c.BuildContext.BuildDirectory, "test", project))
-                    .Environment(vsvars)
-                    .EnvironmentVariable("PATH", $"{DotNetCli.Stage2.BinPath}{Path.PathSeparator}{Environment.GetEnvironmentVariable("PATH")}")
-                    .EnvironmentVariable("TEST_ARTIFACTS", Dirs.TestArtifacts)
-                    .Execute();
-                if (result.ExitCode != 0)
+                testResults.Add(Task<CommandResult>.Factory.StartNew(() => RunXUnitTest(c, project)), project);
+            }
+            
+            while (testResults.Keys.Count > 0)
+            {
+                Task<CommandResult> finishedTest = Task.WhenAny(testResults.Keys).Result;                
+                
+                var testResult = finishedTest.Result;
+                if (testResult.ExitCode != 0)
                 {
-                    failingTests.Add(project);
+                    failingTests.Add(testResults[finishedTest]);
                 }
+                
+                testResults.Remove(finishedTest);
             }
 
             if (failingTests.Any())
@@ -358,6 +357,23 @@ namespace Microsoft.DotNet.Cli.Build
             }
 
             return c.Success();
+        }
+        
+        private static CommandResult RunXUnitTest(BuildTargetContext c, string testProject)
+        {
+            var dotnet = DotNetCli.Stage2;
+            var vsvars = LoadVsVars(c);
+            var configuration = c.BuildContext.Get<string>("Configuration");
+            
+            c.Info($"Running tests in: {testProject}");
+            var result = dotnet.Test("--configuration", configuration, "-xml", $"{testProject}-testResults.xml", "-notrait", "category=failing")
+                .WorkingDirectory(Path.Combine(c.BuildContext.BuildDirectory, "test", testProject))
+                .Environment(vsvars)
+                .EnvironmentVariable("PATH", $"{DotNetCli.Stage2.BinPath}{Path.PathSeparator}{Environment.GetEnvironmentVariable("PATH")}")
+                .EnvironmentVariable("TEST_ARTIFACTS", Dirs.TestArtifacts)
+                .Execute();
+                
+            return result;
         }
 
         [Target]
