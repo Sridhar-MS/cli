@@ -63,6 +63,15 @@ namespace Microsoft.DotNet.Cli.Build
             },
             new
             {
+                Name = "dotnet-desktop-binding-redirects",
+                IsTool = true,
+                Path = "TestAssets/TestPackages/dotnet-desktop-binding-redirects",
+                IsApplicable = new Func<bool>(() => CurrentPlatform.IsWindows),
+                VersionSuffix = s_testPackageBuildVersionSuffix,
+                Clean = true
+            },
+            new
+            {
                 Name = "dotnet-hello",
                 IsTool = true,
                 Path = "TestAssets/TestPackages/dotnet-hello/v1/dotnet-hello",
