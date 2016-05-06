@@ -619,14 +619,18 @@ namespace Microsoft.DotNet.Cli.Build
 
             foreach (var project in ProjectsToPublish)
             {
+                var srcDir = Path.Combine(c.BuildContext.BuildDirectory, "src");
+                FS.CleanBinObj(c, srcDir);
+
                 dotnet.Publish(
                     "--native-subdirectory",
                     "--output",
                     outputDir,
                     "--configuration",
                     configuration,
-                    Path.Combine(c.BuildContext.BuildDirectory, "src", project))
-                    .Environment("DOTNET_BUILD_VERSION", buildVersion.VersionSuffix)
+                    "--version-suffix",
+                    buildVersion.CommitCountString,
+                    Path.Combine(srcDir, project))
                     .Execute()
                     .EnsureSuccessful();
             }
