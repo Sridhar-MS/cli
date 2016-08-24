@@ -123,11 +123,23 @@
                             SetupTestAssetProjectData;"
           Inputs="%(TestAssetProjects.BuildInputs)"
           Outputs="%(TestAssetProjects.BuildOutput)">
+    
+    <ItemGroup>
+      <ProjectsToBuild Include="build/test/BuildTestAssetProjects.proj">
+        <Properties>
+          CLIBuildDll=$(CLIBuildDll);
+          Framework=netcoreapp1.0;
+          ProjectPath=$(RepoRoot)%(TestAssetProjects.ProjectPath);
+          ToolPath=$(DotnetUnderTest);
+          WorkingDirectory=%(TestAssetProjects.ProjectDir)
+        </Properties>
+      </ProjectsToBuild>
+    </ItemGroup>
 
-    <DotNetBuild  Framework="netcoreapp1.0"
-                  ProjectPath="$(RepoRoot)%(TestAssetProjects.ProjectPath)"
-                  ToolPath="$(DotnetUnderTest)"
-                  WorkingDirectory="%(TestAssetProjects.RelativeDir)" />
+    <MSBuild
+      BuildInParallel="True"
+      Projects="@(ProjectsToBuild)">
+    </MSBuild>
   </Target>
 
   <Target Name="RestoreTestAssetProjects"
